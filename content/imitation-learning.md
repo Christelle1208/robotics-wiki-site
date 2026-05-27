@@ -14,16 +14,66 @@ Imitation learning (IL) trains robots by learning from expert demonstrations rat
 
 ---
 
-## Landmark Papers
+## Surveys
 
 ### A Survey of Imitation Learning: Algorithms, Recent Developments, and Challenges
 **Zare, Kebria, Khosravi, Nahavandi — 2023**
 
-Comprehensive survey of IL for robotics and AI. Covers the full spectrum: behavioral cloning, inverse RL, DAgger, GAIL, goal-conditioned IL, and hybrid methods. Discusses challenges including distribution shift, demonstration quality, and scalability. Provides research directions for autonomous driving, manipulation, and NLP applications.
+Comprehensive survey of IL for robotics and AI. Covers the full spectrum: behavioral cloning, inverse RL, DAgger, GAIL, goal-conditioned IL, and hybrid methods. Discusses challenges including distribution shift, demonstration quality, and scalability.
 
-*Tags:* survey, behavioral cloning, inverse RL, DAgger, GAIL
+*Tags:* survey, behavioral cloning, inverse RL, DAgger, GAIL, 2023
 
 ---
+
+### A Survey on Imitation Learning for Contact-Rich Tasks in Robotics
+**Tsuji, Kato, Solak, Zhang, Petrič, Nori, Ajoudani — Saitama / IIT / Jožef Stefan / Google DeepMind, 2026**
+
+Focused survey on IL specifically for **contact-rich manipulation** — tasks involving continuous physical interaction (assembly, peg-in-hole, wiping, surgical procedures). 36-page IJRR survey covering the full pipeline from data collection to deployment.
+
+**Teaching methods taxonomy:**
+- **Kinesthetic teaching** — hand-guiding the robot directly
+- **Teleoperation** — bilateral control transmitting both position and force
+- **VR-based teaching** — capturing movements in virtual space
+- **Observation methods** — cameras/motion capture observing human demos
+
+**Data modalities for contact tasks:**
+- Position/proprioception (baseline)
+- Force/torque (essential for insertion, assembly)
+- Vision RGB/RGB-D (contextual, but blind to contact forces)
+- Tactile (fine-grained contact geometry, slip detection — still mostly research-only)
+- EMG signals (muscle activation → stiffness modulation)
+
+**8 IL paradigm categories covered:**
+1. Behavior Cloning — ACT, Diffusion Policy, LSTM-based
+2. Dynamic Movement Primitives (DMPs) — ProMPs, KMPs, FA-ProDMP
+3. Generative methods — VAE, diffusion, Transformers
+4. Foundation models — VLMs, VLAs (RT-1, RT-2, RoboFlamingo)
+5. Inverse RL / GAIL — reward inference from expert data
+6. Multimodal IL — force + vision + tactile integration
+7. Offline RL — CQL, Q-Transformer, IQL pre-training + SAC fine-tuning
+8. Other — world models, zero/one-shot IL, Riemannian manifolds
+
+**Algorithm selection by sensor modality:**
+
+| Sensor | Recommended approaches | Key advantages | Limitations |
+|--------|----------------------|----------------|-------------|
+| Force/Torque | BC with force features, force-coupled DMPs, IRL | Direct contact observation | Expensive sensors |
+| Vision (RGB/RGB-D) | Visual BC, diffusion policies | Rich semantic info, scalable | Implicit contact, occlusion |
+| Tactile | Conditioned BC, hybrid vision-tactile | Fine-grained contact, slip detection | Limited area, costly |
+| Proprioception only | DMPs, kinesthetic teaching | Simple, reliable | Limited object generalization |
+
+**Applications:** Industrial (peg-in-hole, insertion, polishing, deburring), household (wiping, cloth manipulation, door/drawer opening), healthcare (surgical bone-grinding, rehabilitation, dressing assistance).
+
+**Core open challenges:**
+1. **Hierarchical architectures** — no unified design principle; System 1 (fast/reactive) + System 2 (slow/planning) duality from cognitive science is a promising framework
+2. **Multimodal sensing** — tactile adoption still limited to research; hardware reliability and integration unsolved
+3. **Sim-to-real gap** — contact dynamics are hard to simulate accurately; domain randomization and differentiable simulation are partial solutions
+
+*Tags:* survey, contact-rich, force feedback, tactile, teaching methods, DMPs, multimodal IL, 2026 | See: [[grasping-and-manipulation]], [[hybrid-il-rl]], [[simulation-and-tools]]
+
+---
+
+## Landmark Papers
 
 ### Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware (ACT) → [[algo-act]]
 **Zhao et al., 2023**

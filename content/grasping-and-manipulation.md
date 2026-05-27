@@ -126,9 +126,28 @@ Demonstrates dexterous manipulation across ALOHA (bimanual tabletop), Bi-arm Fra
 
 ---
 
+## Contact-Rich Manipulation
+
+### A Survey on Imitation Learning for Contact-Rich Tasks in Robotics
+**Tsuji, Kato, Solak, Zhang, Petrič, Nori, Ajoudani — IJRR, 2026**
+
+Comprehensive survey of IL for tasks requiring continuous physical interaction. Directly relevant to manipulation: covers assembly, peg-in-hole, insertion, polishing, deburring, cloth manipulation, surgical tasks. Key finding: contact-rich tasks are fundamentally harder than free-space manipulation because:
+- Small positional deviations cause large behavioral changes
+- Visual observation misses contact forces (occlusion at contact point)
+- Tactile sensors needed but remain mostly research-only hardware
+
+**Recommended IL approaches by manipulation type:**
+- Precision assembly (peg-in-hole): force-coupled DMPs or BC with force features
+- Dexterous / household tasks: diffusion policy or ACT with tactile/force augmentation
+- Long-horizon contact sequences: hierarchical VLAs or Mamba-based temporal models
+
+*Tags:* contact-rich, assembly, force feedback, tactile, multimodal IL, 2026 | See: [[imitation-learning]]
+
+---
+
 ## Related Topics
 - [[pick-and-place]] — grasping in the context of full P&P tasks
-- [[imitation-learning]] — learning grasp policies from demonstrations (ACT, Diffusion Policy)
+- [[imitation-learning]] — learning grasp policies from demonstrations (ACT, Diffusion Policy, contact-rich survey)
 - [[reinforcement-learning]] — RL-based grasping (SAC, DQN, SQL)
 - [[simulation-and-tools]] — grasping simulators (MuJoCo, Isaac Sim)
 - [[vision-language-action-models]] — language-conditioned grasping (GF-VLA, OpenVLA)

@@ -88,6 +88,7 @@ Detailed pages covering mechanics, intuition, evaluation, results, and pros/cons
 | Source | Year | Summary |
 |--------|------|---------|
 | A Survey of Imitation Learning: Algorithms, Recent Developments, and Challenges | 2023 | Comprehensive IL survey: BC, inverse RL, DAgger, GAIL, goal-conditioned IL, challenges in robotics |
+| A Survey on Imitation Learning for Contact-Rich Tasks in Robotics | 2026 | IL survey focused on physical interaction tasks (assembly, insertion, wiping, surgical); teaching methods taxonomy; data modalities; algorithm selection by sensor type |
 | A Survey of Robot Intelligence with Large Language Models | 2024 | LLM/VLM survey across 5 categories: reward design, low-level control, planning, manipulation, scene understanding |
 | Deep Reinforcement Learning for Robotics: A Survey of Real-World Successes | 2025 | Modern DRL survey focused on real-world deployment challenges and successes |
 | Reinforcement Learning for Pick and Place Operations in Robotics: A Survey | 2021 | RL algorithms for P&P: MDP formulation, policy optimization, pose estimation |

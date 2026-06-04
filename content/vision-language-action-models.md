@@ -2,6 +2,47 @@
 
 Vision-Language-Action models (VLAs) extend large vision-language models (VLMs) with action prediction heads, enabling robots to be controlled by natural language instructions. They are pretrained on massive internet-scale vision-language data and robot demonstration datasets, then fine-tuned for specific robot setups. VLAs represent the current frontier of generalist robot policies. See also [[world-models]], [[llms-for-robotics]], [[imitation-learning]].
 
+→ **Choosing between RL, IL, and VLAs?** See [[decision-guide]].
+
+---
+
+## When to use VLAs — Critical Synthesis
+
+### ✅ VLAs genuinely excel at
+
+**Semantic generalization.** This is the unique capability that neither RL nor IL has. A fine-tuned OpenVLA can correctly interpret "pick the mug on the left" vs "pick the red cup" without task-specific training per instruction. It understands *what* you mean because it has seen billions of images and text descriptions on the internet. No amount of RL or IL training produces this from scratch.
+
+**Novel object generalization.** VLAs trained on diverse demonstration datasets generalize to objects not seen during fine-tuning — new colors, shapes, textures — because their visual backbone already understands object categories. RL policies and IL policies with limited demos cannot do this.
+
+**Cross-embodiment transfer.** Models like Octo (800k trajectories, 9 platforms), X-VLA (soft prompting), and GR 1.5 (Motion Transfer) can transfer skills across different robot hardware with minimal additional data. RL and IL require retraining from scratch for each new robot.
+
+**Reducing the data burden compared to training from scratch.** A SmolVLA fine-tuned on 50–100 demonstrations can match or exceed a specialized policy trained on thousands of demonstrations, because the backbone already knows how to perceive and reason about the world.
+
+### ❌ VLAs fundamentally struggle with
+
+**Geometric precision.** VLAs are strong at semantic tasks but weak at precise insertion, assembly, or tight tolerance placement. This is because their training signal is mostly image-level supervision — they predict joint configurations without modeling contact forces. Contact-rich tasks remain a major gap (see the [[imitation-learning#contact-rich-survey]] for why this is hard).
+
+**High-frequency control.** Autoregressive token generation at 7B parameters runs at 1–6 Hz. Control tasks requiring >10 Hz feedback (dexterous grasping, dynamic catching, contact-rich assembly) are out of reach without special architectures (async inference, smaller action experts like SmolVLA's ~100M parameter head).
+
+**Data quality sensitivity.** Unlike RL (which explores and corrects), VLAs are pure imitation — they learn exactly what their fine-tuning demos show. Poor demonstrations, inconsistent language annotations, or mismatched camera setups will silently degrade performance in ways that are hard to debug.
+
+**Compute cost.** Even SmolVLA (450M) requires a GPU for training and reasonable inference. A 7B model like OpenVLA requires 4–8x A100 GPUs for fine-tuning (or clever quantization via QLoRA on a single 48GB GPU). This is a real barrier compared to ACT or Diffusion Policy which train on consumer hardware.
+
+### ⚠️ Where the field is heading
+
+VLAs are advancing faster than any other paradigm in this wiki. The trajectory: OpenVLA (7B, open-source, beats RT-2-X 55B) → SmolVLA (450M, community data, 40% faster) → GR 1.5 (multi-embodiment, thinking VLA, agentic system). The key open problems are:
+- **Closing the precision gap**: adding contact-rich feedback (force, tactile) to VLA training
+- **Inference speed**: async inference stacks and small action experts are promising
+- **Evaluation standardization**: most VLAs are evaluated on proprietary setups; LIBERO is emerging as the open benchmark
+
+### 📊 VLAs in the SO-100 experiments
+
+| Model | Status | Key question |
+|-------|--------|-------------|
+| SmolVLA | 🔄 Pending | Does VLA fine-tuning generalize better to new positions than ACT? |
+
+*The hypothesis: SmolVLA requires less per-task engineering than SAC (no reward design) and generalizes better than ACT (to new object positions) — but requires more compute and may be slower at inference.*
+
 ---
 
 ## The VLA Paradigm
@@ -43,16 +84,63 @@ Key results:
 
 ---
 
+## Generalist Policy Evolution
+
+The generalist VLA landscape has followed a clear trajectory: RT-1 (130k demos, 13 robots) → RT-2 (internet-scale VLM + robot data) → OpenVLA (7B open-source, beats RT-2-X) → **π0** (10M+ demos, flow matching, physical intelligence) → **SmolVLA** (450M, community data, open). The key shift: from autoregressive token prediction to **flow matching** as the action generation backbone.
+
+---
+
+### π0: A Vision-Language-Action Flow Model for General Robot Control
+**Black, Brown, Driess et al. — Physical Intelligence, 2024**
+
+The leading open generalist VLA as of 2025. Introduces **flow matching** (instead of diffusion or autoregressive decoding) for continuous action generation, trained on **10M+ trajectories** — the largest robotics pretraining dataset to date.
+
+**Architecture — Mixture of Experts (MoE):**
+- **VLM backbone** (pre-trained, e.g. PaliGemma): processes images + language instructions into tokens
+- **Action expert** (~dedicated flow matching network): denoises action chunks conditioned on VLM tokens
+- **Blockwise causal attention masking**: prevents VLM tokens from attending to action tokens — enables KV caching across denoising steps for faster inference
+- **β-CVAE style action chunking**: predicts Ha future actions jointly (same spirit as ACT)
+
+**Training:**
+- Flow matching loss over both backbone and action expert jointly
+- Timestep τ sampled from Beta(1.5, 1) on [0, s] — emphasizes noisy samples, focuses learning on mean reconstruction
+- Pretraining on proprietary π dataset (~91% private) + Open-X + DROID; fine-tuning on narrow high-quality task data
+
+**Key results:**
+- 3.3B parameters
+- **10 denoising steps** at inference — much faster than diffusion
+- Strong cross-embodiment: zero-pads DoF for robots with fewer joints; uses 3 fixed camera views
+- Pre-train + fine-tune consistently outperforms training from scratch per task
+- Foundation for downstream models: π0-FAST (distilled for speed, used as baseline in VLA-RL benchmark)
+
+*Architecture:* MoE (VLM backbone + flow matching action expert) | *Training data:* 10M+ trajectories | *Tags:* flow matching, generalist, pre-train+adapt, cross-embodiment, 2024 | See: [[llms-for-robotics]]
+
+---
+
 ## Efficient VLAs
 
 ### SmolVLA: A VLA for Affordable and Efficient Robotics
 **Shukor et al. — HuggingFace, 2025**
 
-Addresses the cost barrier of large VLAs. SmolVLA is designed to train on a **single GPU** and deploy on **consumer GPUs or even CPUs**. Introduces an **asynchronous inference stack** that decouples perception/action prediction from action execution, enabling higher control rates with chunked action generation.
+Addresses the cost barrier of large VLAs like π0 (3.3B params). SmolVLA targets accessible hardware: trains on a **single GPU**, deploys on **consumer GPUs or CPUs**.
 
-Despite compact size, achieves **performance comparable to VLAs 10× larger**. Releases all code, pretrained models, and training data. Community-collected data from affordable robotic platforms.
+**Architecture:**
+- **SmolVLM-2 backbone** (SigLIP vision encoder + SmolLM2 language decoder) — compact pre-trained VLM
+- **~100M parameter action expert** with interleaved self-attention + cross-attention layers (vs π0's pure self-attention)
+- **Flow matching** for action generation (same as π0) — 10 denoising steps at inference
+- **450M total parameters** vs π0's 3.3B
+- **Async inference stack**: decouples action prediction from execution for higher control rates on modest hardware
 
-*Architecture:* Small VLM backbone | *Tags:* efficient, affordable, community-driven, async inference, 2025
+**Data:** 450+ community datasets (SO-100/SO-101 platforms), 20k+ trajectories. Re-annotated with a small VLM to fix noisy/missing instructions.
+
+**Results vs π0:**
+- **40% faster inference**
+- **6× less memory**
+- Comparable task success across real-world and simulated benchmarks
+
+Releases all code, pretrained models, and training data (fully open).
+
+*Architecture:* SmolVLM-2 + flow matching action expert | *Parameters:* ~450M | *Tags:* efficient, affordable, community-driven, async inference, flow matching, 2025 | See: [[simulation-and-tools]]
 
 ---
 
@@ -176,7 +264,8 @@ Leverages large-scale simulation data (see [[algo-molmospaces|MolmoSpaces]]) to 
 |-------|-----------|------|--------------|--------------|
 | Octo | ~90M | Yes | Yes (hours) | Multi-platform, 800k demos |
 | OpenVLA | 7B | Yes | Yes (QLoRA) | Beats RT-2-X 55B; strong language grounding |
-| SmolVLA | <1B | Yes | Single GPU | Affordable; async inference |
+| π0 | 3.3B | Partial | Pre-train+adapt | Flow matching; 10M+ demos; 10-step inference |
+| SmolVLA | ~450M | Yes | Single GPU | 40% faster, 6× less memory than π0; community data |
 | TinyVLA | <1B | Yes | Fast | Data-efficient; diffusion decoder |
 | SafeVLA | — | Yes | CMDP | Safety alignment |
 | VLA-RL | 7B (OpenVLA) | Yes | Online RL | Surpasses offline fine-tuning |

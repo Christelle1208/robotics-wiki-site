@@ -107,9 +107,38 @@ Sim-to-real gap arises from: visual appearance differences, contact dynamics, la
 
 ---
 
+## Open-Source Robotics Tooling
+
+### LeRobot — End-to-End Open-Source Robot Learning (HuggingFace)
+**Capuano, Pascal, Zouitine, Wolf, Aractingi — University of Oxford / HuggingFace, 2025**
+
+HuggingFace's vertically integrated open-source library for the full robot learning stack. The de facto standard toolkit for accessible robot learning research.
+
+**LeRobotDataset format:**
+- Unified multi-modal dataset format: tabular data (joint states, actions) + MP4 video streams + JSON metadata
+- Native windowing API for action chunking and observation history
+- Streaming mode for large datasets without local storage
+- Supports SO-100, SO-101, ALOHA-2, humanoid arms, and simulation-based datasets
+
+**Supported algorithms (all in PyTorch):**
+- [[algo-act|ACT]] — action chunking with Transformers
+- [[algo-diffusion-policy|Diffusion Policy]] — DDPM-based visuomotor policy
+- [[algo-vq-bet|VQ-BeT]] — vector-quantized behavior transformer
+- **π0** — flow matching VLA (Physical Intelligence)
+- **SmolVLA** — compact VLA with async inference
+- **HIL-SERL** — human-in-the-loop RL (same as [[algo-hitl-rl|HITL-RL]])
+- **TD-MPC** — model-based RL
+
+**Async inference stack:** Decouples policy server (runs on GPU, generates action chunks) from robot client (executes actions at control frequency). Enables deploying large VLAs on modest hardware by buffering predicted actions.
+
+*Tags:* open-source, tooling, LeRobotDataset, async inference, 2025 | See: [[imitation-learning]], [[vision-language-action-models]], [[reinforcement-learning]]
+
+---
+
 ## Related Topics
 - [[reinforcement-learning]] — RL training relies on simulated environments
 - [[pick-and-place]] — P&P is the primary task evaluated in simulators
 - [[grasping-and-manipulation]] — grasping benchmarks (Fetch, Shadow Hand, Franka)
 - [[trajectory-planning]] — trajectory algorithms validated in simulation
 - [[world-models]] — world models learn environmental dynamics like simulators
+- [[imitation-learning]] — LeRobot is the primary tooling for IL research

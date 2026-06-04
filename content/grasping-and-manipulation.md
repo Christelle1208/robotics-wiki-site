@@ -4,6 +4,40 @@ Robotic grasping is the act of securing an object with a gripper or hand. 6-DoF 
 
 ---
 
+## Synthesis — Grasping and Manipulation Approaches
+
+Grasping sits at the boundary between perception and control. The right approach depends heavily on whether the task requires **geometric precision** (6-DoF pose estimation, peg insertion) or **semantic flexibility** (grasp any object of type X).
+
+### Key distinctions
+
+**Free-space grasping vs contact-rich manipulation**
+Free-space P&P grasping (pick an object from a clear surface, place elsewhere) is well-solved by RL and IL. Contact-rich tasks (assembly, insertion, wiping, surgical procedures) are fundamentally harder — see the [[imitation-learning#contact-rich-survey]] for why. Contact dynamics are nonlinear, force feedback is essential, and tactile sensors remain research-only hardware.
+
+**Structured vs unstructured environments**
+In structured environments (fixed bin, known objects, consistent lighting), RL and task-specific IL achieve 80–90%+ success. In unstructured environments (cluttered bins, varied objects, arbitrary positions), VLAs and 6-DoF geometric grasping methods (Transformer + TSDF) are needed.
+
+### Which approach for which grasping task
+
+| Task | Recommended approach | Why |
+|------|---------------------|-----|
+| Simple P&P, fixed objects | SAC / ACT | Well-covered; see [[pick-and-place]] |
+| Cluttered environments | DQN + non-prehensile (push + grasp) | Objects need isolation before grasping |
+| Arbitrary object shapes, 6-DoF pose | Transformer + TSDF (geometric) | Predicts full 6-DoF from 3D geometry |
+| Bimanual, dexterous assembly | ACT / HITL-RL | ACT handles coordination; HITL-RL for precision |
+| Contact-rich (insertion, polishing) | Force-coupled IL (DMP + force BC) | Requires force/torque feedback data |
+| Language-conditioned ("grasp the X") | VLA (SmolVLA, GF-VLA) | Semantic understanding required |
+
+### The contact-rich gap
+
+The most important open challenge in manipulation is contact-rich tasks: assembly, peg-in-hole, surface polishing, surgical procedures. These require:
+1. Force/torque feedback (not just position)
+2. Tactile sensing for fine-grained contact (still mostly research hardware)
+3. Sub-millimeter precision that VLAs currently cannot provide
+
+Current best approaches: force-coupled DMPs, ACT with force augmentation (Bi-ACT, Comp-ACT), and HITL-RL for iterative refinement. VLAs are advancing but not yet competitive on precision assembly.
+
+---
+
 ## 6-DoF Grasping
 
 ### Bio-Inspired Affordance Learning for 6-DoF Robotic Grasping: A Transformer-Based Global Feature Encoding Approach

@@ -2,6 +2,89 @@
 
 Pick-and-place (P&P) is the canonical robot manipulation task: a robot arm grasps an object from one location and moves it to another. It appears in nearly every paper in this collection. P&P is studied as both an end goal (industrial automation, logistics) and a benchmark task for evaluating manipulation policies. See also [[grasping-and-manipulation]], [[reinforcement-learning]], [[trajectory-planning]].
 
+→ **Not sure which approach to use?** See [[decision-guide]] for the full flowchart.
+
+---
+
+## Synthesis — Which approach for pick-and-place?
+
+P&P is deceptively simple as a description but covers an enormous range of difficulty depending on context. The right approach depends on three key factors: **what generalization you need**, **whether a simulator is available**, and **how much demonstration data you can collect**.
+
+### The three families applied to P&P
+
+#### RL for P&P
+RL is the natural fit when you have a simulator and can define a reward (e.g., distance to target + grasp success signal). The results in this collection are strong: SAC with task decomposition reaches **93.2%** (Kim et al., 2023) and **92% on SO-100** in simulation. CQL+SAC transfers to real hardware at 80%.
+
+**RL works well for P&P when:**
+- The task is fixed (same objects, same bin layout, same robot)
+- A physics simulator is available (MuJoCo, Isaac Sim, Robosuite)
+- You can decompose the task into subtasks with shaped rewards (approach → grasp → place)
+- You need precise control (exact placement coordinates)
+
+**RL struggles with P&P when:**
+- Objects vary (new shapes, new materials, new positions at test time)
+- No simulator is available — real-robot RL exploration damages hardware
+- The scene is cluttered and contact dynamics are hard to simulate accurately
+- You need to generalize to language instructions ("put the red mug next to the bowl")
+
+**Key insight from the literature:** reward shaping matters enormously. Papers that decompose P&P into 3 subtasks (approach, grasp, place) with per-subtask rewards consistently outperform those with a single sparse success signal. HER is the go-to fix for sparse binary rewards without reward engineering.
+
+#### IL for P&P
+IL removes the reward design bottleneck. With 10–50 demonstrations via teleoperation (ALOHA, SpaceMouse), ACT and Diffusion Policy can achieve high performance on a fixed P&P setup. ACT reaches 80–90% on delicate bimanual tasks from ~10 minutes of demos.
+
+**IL works well for P&P when:**
+- The setup is fixed (same robot, same camera, same objects in similar positions)
+- You can collect quality demonstrations via kinesthetic teaching or teleoperation
+- You want to skip reward design entirely
+- The task is dexterous and hard to specify as a reward (e.g., inserting a battery)
+
+**IL struggles with P&P when:**
+- Objects or positions vary significantly at test time (distribution shift)
+- You can only collect a handful of inconsistent demos
+- The task is long-horizon (compounding errors become severe after ~10 steps)
+- You need to react to unexpected perturbations mid-task
+
+**Key insight from the literature:** ACT's action chunking (predicting k future actions jointly) is specifically designed to fight the compounding error problem in P&P. Diffusion Policy handles multimodal grasps better (e.g., left-hand vs right-hand approach). For long-horizon P&P sequences, Mamba2Diff's temporal SSM outperforms both.
+
+#### VLA for P&P
+VLAs add semantic understanding: a fine-tuned SmolVLA or OpenVLA can pick "the object on the left" or "the red container" without any task-specific reward or dedicated demonstration per object. This is the direction the field is moving for real-world deployment.
+
+**VLAs work well for P&P when:**
+- The task requires language conditioning ("pick the blue cube and put it in the red bin")
+- Objects or scenes vary — generalization is the core requirement
+- You have modest fine-tuning data (50–200 demos) but want broad coverage
+- Inference speed is not critical (VLAs typically run at 1–6 Hz)
+
+**VLAs struggle with P&P when:**
+- Geometric precision is needed (peg-in-hole, tight insertion tolerances)
+- High-frequency control is required (>10 Hz) — use async inference stacks
+- You have zero demonstrations (VLAs still need some fine-tuning)
+- Compute is very limited (though SmolVLA at 450M runs on consumer GPUs)
+
+---
+
+### Practical recommendation for a new P&P project
+
+| Your situation | Start with | Then consider |
+|---------------|-----------|---------------|
+| Sim available, fixed setup, want strong baseline fast | SAC (task-decomposed reward) | Add CQL for offline stability if deploying to real |
+| Fixed setup, 20+ demos available, no sim needed | ACT | Fine-tune with AWAC if you can collect more online data |
+| Variable objects, need language instructions | SmolVLA fine-tune | OpenVLA if you want stronger language grounding |
+| Long-horizon sequence (5+ steps) | Relay Policy (IL→RL hierarchy) | Or Diffusion Policy + Mamba2Diff |
+| Cluttered environment | DQN + non-prehensile moves (push + grasp) | Or HITL-RL for real-world robustness |
+
+---
+
+### Experimental results — SO-100
+
+| Method | Environment | Result | Notes |
+|--------|-------------|--------|-------|
+| SAC (task-decomposed) | Simulation | **92% success** | 3-subtask reward (approach, grasp, place) |
+| ACT | — | 🔄 Pending | — |
+| SmolVLA | — | 🔄 Pending | — |
+
+*These results will be updated as experiments progress. The SAC simulation result confirms that RL with proper reward shaping is a very strong baseline. Whether IL (ACT) can match it from demonstrations alone — without simulator access — is the central open question for real deployment.*
+
 ---
 
 ## P&P Task Taxonomy

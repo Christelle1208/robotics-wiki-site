@@ -2,6 +2,43 @@
 
 Reinforcement learning (RL) trains robots by trial-and-error interaction with an environment, maximizing cumulative reward. It has become the dominant paradigm for acquiring dexterous, adaptive manipulation skills without hand-coded controllers. See also [[imitation-learning]], [[hybrid-il-rl]], [[pick-and-place]].
 
+→ **Choosing between RL, IL, and VLAs?** See [[decision-guide]].
+
+---
+
+## When to use RL — Critical Synthesis
+
+### ✅ RL genuinely excels at
+
+**Precise, task-specific control in simulation.** If you have a fast simulator and can define what "success" looks like as a number, RL is the most powerful tool available. It is not bounded by human demonstration quality — it can discover strategies humans wouldn't think of. SAC with task-decomposed rewards reaches 92–93% on pick-and-place in simulation, which is competitive with the best IL approaches — without requiring any demonstrations.
+
+**Reward-shaped learning on well-defined tasks.** The key skill in applying RL to robotics is reward engineering: decomposing the task into subtasks, each with a shaped reward, dramatically accelerates convergence. The papers in this collection consistently show that a 3-subtask decomposition (approach → grasp → place) outperforms a single sparse reward.
+
+**Handling the sparse reward problem via HER.** Hindsight Experience Replay is one of the most practically useful ideas in robot RL: even completely failed episodes provide learning signal by relabeling the achieved state as the "goal." This turns binary success/failure signals into dense learning — essential for tasks where the robot rarely succeeds by chance.
+
+**Improving beyond human performance.** IL is hard-capped at demonstrator quality. RL has no such ceiling. HITL-RL (99%+ success in 1–2 hours) demonstrates this: the human-in-the-loop correction mechanism lets RL far exceed what any pure BC approach would achieve.
+
+### ❌ RL fundamentally struggles with
+
+**Real-robot training without a simulator.** Exploration is dangerous — the robot will try random actions, potentially damaging itself, objects, or humans nearby. Even safe real-robot RL (SERL/HIL-SERL) requires significant engineering to make exploration safe. The sim-to-real gap is a second tax: policies that work perfectly in MuJoCo often fail on real hardware due to contact dynamics, sensor noise, and actuation delays.
+
+**Generalization across objects and scenes.** An RL policy trained to pick a red cube from a fixed bin position will fail on a blue cube, a shifted bin, or different lighting. RL policies are highly task-specific. Combining RL with VLAs (VLA-RL) is the current frontier answer to this limitation.
+
+**Reward design.** This is the hidden cost of RL that papers understate. Designing a reward that actually produces the behavior you want — without reward hacking — requires domain expertise and iteration. Tasks that are "obviously" easy to specify (e.g., "put the cube in the bin") often have subtle reward shaping requirements (approach angle, grasp force, placement precision).
+
+### ⚠️ Common pitfalls
+
+- **Don't use sparse rewards without HER.** The robot will almost never succeed by chance, and will learn nothing. Always add HER for goal-conditioned tasks with binary success signals.
+- **Don't skip task decomposition.** A single reward for "pick-and-place success" will train much more slowly than 3 shaped subtask rewards. The performance gap is large (hours vs days of simulation time).
+- **Don't ignore sim-to-real.** A policy trained in MuJoCo on a perfect robot model will behave differently on real hardware. Domain randomization during training (varying mass, friction, starting positions) significantly improves transfer.
+- **Don't use RL when you have 20+ good demonstrations.** IL will converge faster, require no reward design, and be safer to train. Use RL when demonstrations are unavailable or when you need to exceed demonstrator performance.
+
+### 📊 RL in the SO-100 experiments
+
+SAC with task-decomposed reward (approach + grasp + place) reached **92% success in simulation**. This is the strongest baseline result so far. Key lessons:
+- The 3-subtask reward decomposition was essential — early experiments with a sparse reward converged poorly
+- *[Real-hardware results pending — will be added here once available]*
+
 ---
 
 ## Core Algorithms

@@ -1,6 +1,18 @@
 # Wiki Index — Robotics & Robot Learning
 
-A wiki compiled from 57 research papers on robot manipulation, reinforcement learning, imitation learning, and foundation models for robotics. Last updated: 2026-05-22.
+A wiki compiled from research papers on robot manipulation, reinforcement learning, imitation learning, and foundation models for robotics. Built in parallel with experiments on the SO-100 robot arm.
+
+**New here?** Start with [[overview]] — it explains the three paradigm families and how to navigate the wiki.  
+**Choosing an approach?** Go directly to [[decision-guide]] for the decision flowchart and comparison tables.
+
+---
+
+## Navigation & Synthesis Pages
+
+| Page | Purpose |
+|------|---------|
+| [[overview]] | Entry point — three paradigm families, how to navigate, experimental results |
+| [[decision-guide]] | Flowchart + comparison table — which approach for which situation |
 
 ---
 
@@ -142,6 +154,7 @@ Detailed pages covering mechanics, intuition, evaluation, results, and pros/cons
 
 | Source | Year | Summary |
 |--------|------|---------|
+| Robot Learning: A Tutorial | 2025 | HuggingFace/Oxford tutorial covering RL → BC → generalist VLAs; introduces LeRobot ecosystem, π0 and SmolVLA architectures, flow matching for actions, HIL-SERL, RLPD |
 | Octo: An Open-Source Generalist Robot Policy | 2024 | Transformer trained on 800k Open X-Embodiment trajectories; 9 platforms; fine-tunable in hours |
 | OpenVLA: An Open-Source Vision-Language-Action Model | 2024 | 7B VLA on 970k demos; Llama2+DINOv2+SigLIP; outperforms RT-2-X (55B) by 16.5% |
 | SmolVLA: A VLA for Affordable and Efficient Robotics | 2025 | Single-GPU VLA; async inference; matches VLAs 10× larger |

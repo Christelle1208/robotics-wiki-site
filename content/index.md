@@ -12,7 +12,8 @@ A wiki compiled from research papers on robot manipulation, reinforcement learni
 | Page | Purpose |
 |------|---------|
 | [[overview]] | Entry point — three paradigm families, how to navigate, experimental results |
-| [[decision-guide]] | Flowchart + comparison table — which approach for which situation |
+| [[decision-guide]] | Flowchart + comparison table — which approach for which situation; training workflows, robustness techniques, REX |
+| [[evaluation-protocol]] | Standardized evaluation axes (ID, near-OOD, far-OOD, robustness, perturbation) + SO-100 test matrix |
 
 ---
 

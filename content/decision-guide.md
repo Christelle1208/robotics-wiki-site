@@ -78,14 +78,14 @@ A complete picture of each family: what it's good at, where it breaks, how you a
 - **Can exceed human performance** — unlike IL, RL is not bounded by demonstrator quality. With enough simulation time, it finds optimal policies.
 - **Precise, repeatable control** — RL policies learn exact joint trajectories that optimize the reward, producing very precise and consistent behavior on the trained task.
 - **Reward shaping = task decomposition for free** — breaking the task into subtasks with shaped rewards (approach → grasp → place) dramatically accelerates convergence and produces interpretable intermediate behaviors.
-- **Strong in simulation** — GPU-parallelized sim (MuJoCo, Isaac Sim) allows millions of training episodes per hour. SAC on a pick-and-place task converges in hours on a single GPU.
+- **Strong in simulation** — GPU-parallelized sim (MuJoCo, Isaac Sim) allows millions of training episodes per hour. [[algo-sac|SAC]] on a pick-and-place task converges in hours on a single GPU.
 
 #### ❌ Hard limits
 - **Without a simulator** — real-robot RL is extremely slow and risky. Exploration inevitably produces dangerous behaviors. The sim-to-real gap is a second tax on top.
 - **Without a reward** — if you can't specify "success" as a scalar number, RL has nothing to optimize. Reward design is often the hardest part and can take as long as the training itself.
-- **No generalization** — a SAC policy trained to pick a red cube from bin A will fail on a green cube, a different bin, or different lighting. RL policies are highly task-specific by nature.
+- **No generalization** — a [[algo-sac|SAC]] policy trained to pick a red cube from bin A will fail on a green cube, a different bin, or different lighting. RL policies are highly task-specific by nature.
 
-#### 🔧 How to train (SAC / PPO)
+#### 🔧 How to train ([[algo-sac|SAC]] / [[algo-ppo|PPO]])
 
 **1. Choose a simulator**
 
@@ -98,7 +98,7 @@ A complete picture of each family: what it's good at, where it breaks, how you a
 
 **2. Define the MDP**
 - **State space**: joint positions + velocities, gripper state, object pose (from sim ground truth or estimated from camera). For real transfer, prefer using only observations available on real hardware.
-- **Action space**: joint velocity deltas (SAC default) or end-effector delta pose (more intuitive reward design). End-effector control simplifies reward shaping but adds IK overhead.
+- **Action space**: joint velocity deltas ([[algo-sac|SAC]] default) or end-effector delta pose (more intuitive reward design). End-effector control simplifies reward shaping but adds IK overhead.
 - **Episode length**: enough for the task (e.g. 200 steps at 20 Hz = 10 seconds for P&P). Too short = never succeeds; too long = learns to stall.
 
 **3. Design the reward — the most important step**
@@ -107,18 +107,18 @@ A complete picture of each family: what it's good at, where it breaks, how you a
 - **Add success bonus**: binary +1 when task completes. This shapes the end condition clearly.
 - **Penalize dangerous actions**: penalize excessive joint torques or end-effector forces to protect hardware.
 - **Avoid reward hacking**: if the robot finds a way to maximize reward without completing the task (e.g., dragging the object), add a penalty for that behavior.
-- **HER for sparse signals**: if you can only provide binary success/failure, use Hindsight Experience Replay — it turns every failed episode into useful data.
+- **[[algo-her|HER]] for sparse signals**: if you can only provide binary success/failure, use [[algo-her|Hindsight Experience Replay]] — it turns every failed episode into useful data.
 
 **4. Algorithm choice**
-- **SAC** — default choice for continuous action manipulation. Auto-tunes entropy coefficient α; off-policy so data-efficient; twin critics prevent Q-value overestimation.
-- **PPO** — better for discrete actions or when sample efficiency matters less than training stability. Simpler to implement.
-- **CQL** — when you have offline data (previous robot runs) you want to reuse before online training.
+- **[[algo-sac|SAC]]** — default choice for continuous action manipulation. Auto-tunes entropy coefficient α; off-policy so data-efficient; twin critics prevent Q-value overestimation.
+- **[[algo-ppo|PPO]]** — better for discrete actions or when sample efficiency matters less than training stability. Simpler to implement.
+- **[[algo-cql|CQL]]** — when you have offline data (previous robot runs) you want to reuse before online training.
 
 **5. Training loop**
-- Start with 0 exploration steps, let SAC's initial random policy fill the replay buffer (typically 1k–10k steps).
+- Start with 0 exploration steps, let [[algo-sac|SAC]]'s initial random policy fill the replay buffer (typically 1k–10k steps).
 - Monitor: reward curves, success rate, entropy (α). A falling entropy with no reward increase = policy collapsed early.
 - **Curriculum**: start with the object close to the robot (easy), progressively randomize its position more widely. This is much faster than training on the full distribution from step 0.
-- Run **at least 1M steps** for P&P with SAC. Evaluate every 50k steps on a fixed held-out set of 100 initial configs.
+- Run **at least 1M steps** for P&P with [[algo-sac|SAC]]. Evaluate every 50k steps on a fixed held-out set of 100 initial configs.
 
 #### 🛡️ Building robustness — RL
 
@@ -153,7 +153,7 @@ The core technique is **domain randomization**: training with varied conditions 
 - **Export policy**: save SAC actor network (small MLP or CNN) as ONNX or TorchScript for efficient inference
 - **ROS/ROS2 wrapper**: policy node reads joint states + camera frames → outputs joint velocity commands at 20–50 Hz
 - **Sim-to-real calibration**: run the same sim environment with real camera feed to check visual alignment before first real run
-- **Expect a sim-to-real drop**: typically 10–20 pp. Budget time for real-world fine-tuning (CQL on real rollouts, or HITL-RL for targeted corrections)
+- **Expect a sim-to-real drop**: typically 10–20 pp. Budget time for real-world fine-tuning ([[algo-cql|CQL]] on real rollouts, or [[algo-hitl-rl|HITL-RL]] for targeted corrections)
 - **Safety layer**: add joint limit checks and velocity clipping as a safety wrapper around the policy output
 
 #### ⚠️ Key constraints
@@ -173,7 +173,7 @@ The core technique is **domain randomization**: training with varied conditions 
 #### ✅ Key advantages
 - **No reward design** — the expert demonstrates the task; the policy learns the behavior directly. This eliminates the hardest part of RL (reward engineering).
 - **Safe training** — no exploration. The policy only produces actions that look like the demonstrations. Zero risk of unexpected robot behavior during training.
-- **Fast convergence from few demos** — ACT achieves 80–90% success from ~10 minutes of demonstrations. Diffusion Policy extracts rich multimodal information from 20–100 demos. No simulator needed.
+- **Fast convergence from few demos** — [[algo-act|ACT]] achieves 80–90% success from ~10 minutes of demonstrations. [[algo-diffusion-policy|Diffusion Policy]] extracts rich multimodal information from 20–100 demos. No simulator needed.
 - **Captures implicit human knowledge** — force modulation, grasp approach angles, timing — things that are easy to demonstrate but nearly impossible to specify as a reward function.
 - **Works directly on real hardware** — no sim-to-real gap. Demonstrations are collected on the target robot in the target environment.
 
@@ -191,7 +191,7 @@ The most important investment is *how* you collect demonstrations, not just how 
 
 - **Teleoperation** (SpaceMouse, ALOHA leader arm): captures both position and velocity intent; best for dexterous tasks. Preferred for P&P and assembly.
 - **Kinesthetic teaching** (manually guide the robot): faster to set up, but physical contact with the robot can introduce noise and inconsistency.
-- **Human video + retargeting** (EasyMimic): requires no robot during demo collection, but retargeting to robot kinematics introduces error.
+- **Human video + retargeting** ([[imitation-learning#EasyMimic|EasyMimic]]): requires no robot during demo collection, but retargeting to robot kinematics introduces error.
 
 **Collection consistency rules** (critical — inconsistent demos are worse than fewer consistent ones):
 - Fix camera position and lighting before any recording — do not move either mid-dataset
@@ -208,19 +208,19 @@ The most important investment is *how* you collect demonstrations, not just how 
 
 | Situation | Architecture | Why |
 |-----------|-------------|-----|
-| Few demos (10–30), precise task | **ACT** | β-CVAE latent captures behavioral modes; chunking reduces error compounding |
-| Many demos (50+), multimodal grasps | **Diffusion Policy** | DDPM covers full multimodal distribution; +46.9% vs prior SOTA |
-| Long-horizon (5+ steps) | **Mamba2Diff** | SSM handles temporal dependencies across long sequences |
-| Fast inference needed (<10ms) | **ACT** or **VQ-BeT** | VQ-BeT is 5× faster than Diffusion Policy |
+| Few demos (10–30), precise task | **[[algo-act\|ACT]]** | β-CVAE latent captures behavioral modes; chunking reduces error compounding |
+| Many demos (50+), multimodal grasps | **[[algo-diffusion-policy\|Diffusion Policy]]** | DDPM covers full multimodal distribution; +46.9% vs prior SOTA |
+| Long-horizon (5+ steps) | **[[imitation-learning\|Mamba2Diff]]** | SSM handles temporal dependencies across long sequences |
+| Fast inference needed (<10ms) | **[[algo-act\|ACT]]** or **[[algo-vq-bet\|VQ-BeT]]** | VQ-BeT is 5× faster than Diffusion Policy |
 
-**3. Training details — ACT**
+**3. Training details — [[algo-act|ACT]]**
 - **Chunk size (k)**: typically 50–100 timesteps (1–5 seconds at 20 Hz). Larger chunks reduce boundary artifacts but increase latency.
 - **β parameter** (KL weight in β-CVAE): controls latent space compression. Higher β = smoother but less expressive. Start at β=10, tune based on rollout smoothness.
 - **Training budget**: 50k–200k gradient steps. Use learning rate warmup (1k steps) and cosine decay.
 - **Validation**: reserve 10–20% of demos as a held-out set. Monitor reconstruction loss on held-out trajectories, not just training loss.
 
-**3b. Training details — Diffusion Policy**
-- **Noise schedule**: DDPM with 100 denoising steps at training; can reduce to 10–25 at inference with DDIM.
+**3b. Training details — [[algo-diffusion-policy|Diffusion Policy]]**
+- **Noise schedule**: [[algo-diffusion-policy|DDPM]] with 100 denoising steps at training; can reduce to 10–25 at inference with DDIM.
 - **Action horizon**: predict 16–32 future steps; execute 8. Receding horizon reduces commitment error.
 - **Visual encoder**: typically a pre-trained ResNet or ViT. Freeze or fine-tune depending on how different your visual domain is from ImageNet.
 
@@ -240,10 +240,10 @@ This is the most important robustness lever for IL. The policy can only generali
 | Variation axis | What to do | Notes |
 |---------------|-----------|-------|
 | **Object position** | Sample positions on a grid or randomly across the target workspace. At minimum: 3–4 distinct positions covering corners + center | If you only demo center positions, expect failure near edges |
-| **Object orientation** | Collect demos at 0°, 45°, 90°, 135° for symmetric objects. For asymmetric objects, cover all valid grasp faces | Even small rotations (15°) can break ACT if not covered |
+| **Object orientation** | Collect demos at 0°, 45°, 90°, 135° for symmetric objects. For asymmetric objects, cover all valid grasp faces | Even small rotations (15°) can break [[algo-act\|ACT]] if not covered |
 | **Lighting conditions** | Collect some demos under different ambient lighting (bright/dim, window vs artificial). Even 5–10 demos per condition helps | Minimal cost; large robustness gain |
 | **Object distractors** | Add irrelevant objects to the scene in some demos (10–20% of dataset). The policy should learn to ignore them | A policy never trained with distractors will try to grasp them |
-| **Grasp alternatives** | If multiple valid grasps exist (left/right approach), deliberately include both in the dataset | Diffusion Policy handles this well; ACT needs both in the β-CVAE latent |
+| **Grasp alternatives** | If multiple valid grasps exist (left/right approach), deliberately include both in the dataset | [[algo-diffusion-policy\|Diffusion Policy]] handles this well; [[algo-act\|ACT]] needs both in the β-CVAE latent |
 | **Table height / workspace variation** | If deployment height varies slightly, include this variation in demos | Often overlooked; 1cm height difference can break a policy |
 
 **Data augmentation — synthetic variation at training time**
@@ -264,10 +264,10 @@ Applied to recorded demos during training, not during collection. These are chea
 
 #### 🚀 How to deploy
 - **Load policy + preprocessors**: load trained weights, normalization stats, and image preprocessing pipeline together
-- **Action chunking (ACT)**: predict chunk of k actions → execute at hardware frequency → re-query policy at chunk boundary (or every n steps with temporal ensembling)
+- **Action chunking ([[algo-act|ACT]])**: predict chunk of k actions → execute at hardware frequency → re-query policy at chunk boundary (or every n steps with temporal ensembling)
 - **Temporal ensembling**: query policy every step, take weighted average of overlapping predictions — smoother execution, slightly higher compute
-- **Async inference (Diffusion Policy)**: run inference at 5–10 Hz on GPU server; robot client executes from action queue at 20–50 Hz
-- **Monitor for distribution shift**: if execution deviates significantly from training trajectories (measure joint position error vs expected), flag for human correction or re-demonstration
+- **Async inference ([[algo-diffusion-policy|Diffusion Policy]])**: run inference at 5–10 Hz on GPU server; robot client executes from action queue at 20–50 Hz
+- **Monitor for distribution shift**: if execution deviates significantly from training trajectories (measure joint position error vs expected), flag for human correction or re-demonstration (DAgger, [[algo-hitl-rl|HITL-RL]])
 - **Recovery**: when failure detected, return to a known safe state (home position) before retrying
 
 #### ⚠️ Key constraints
@@ -288,7 +288,7 @@ Applied to recorded demos during training, not during collection. These are chea
 - **Semantic generalization** — understands natural language instructions ("pick the mug on the left") without per-instruction training. Inherited from internet-scale pretraining.
 - **Novel object generalization** — recognizes and grasps objects not seen during fine-tuning because the visual backbone already understands object categories.
 - **Low fine-tuning data requirement** — 50–200 demonstrations can produce a model that generalizes broadly, because the backbone already handles perception and reasoning.
-- **Cross-embodiment transfer** — models like Octo, X-VLA, and GR 1.5 can transfer across different robot hardware with minimal additional data.
+- **Cross-embodiment transfer** — models like [[algo-octo|Octo]], X-VLA, and [[algo-gemini-robotics-15|GR 1.5]] can transfer across different robot hardware with minimal additional data.
 - **Language as a free interface** — no task-specific programming. "Sort the objects by color" works if the model understands color, without any task-specific demo for that exact sorting criterion.
 
 #### ❌ Hard limits
@@ -304,10 +304,10 @@ Applied to recorded demos during training, not during collection. These are chea
 
 | Model | Parameters | Hardware needed | Best for |
 |-------|-----------|----------------|---------|
-| SmolVLA | ~450M | Single consumer GPU (8GB+) | Accessible; community data; SO-100 compatible |
-| OpenVLA | 7B | 48GB GPU (or 4×A100 without QLoRA) | Strong language grounding; well-documented |
-| π0 | 3.3B | 24GB GPU (quantized) | Flow matching; large pretrain corpus |
-| GR 1.5 | — | API only | Multi-embodiment; thinking VLA; closed |
+| [[vision-language-action-models\|SmolVLA]] | ~450M | Single consumer GPU (8GB+) | Accessible; community data; SO-100 compatible |
+| [[algo-openvla\|OpenVLA]] | 7B | 48GB GPU (or 4×A100 without [[algo-qlora\|QLoRA]]) | Strong language grounding; well-documented |
+| [[vision-language-action-models\|π0]] | 3.3B | 24GB GPU (quantized) | Flow matching; large pretrain corpus |
+| [[algo-gemini-robotics-15\|GR 1.5]] | — | API only | Multi-embodiment; thinking VLA; closed |
 
 **2. Collect and structure fine-tuning demos**
 - **Format**: use LeRobotDataset (tabular joint data + MP4 videos + JSON metadata). This ensures compatibility with all HuggingFace VLA training pipelines.
@@ -316,10 +316,10 @@ Applied to recorded demos during training, not during collection. These are chea
 - **Camera setup**: follow the model's expected camera configuration (SmolVLA expects top/wrist/side views in a standardized order). Document your camera-to-model mapping.
 - **Re-annotation tool**: if instructions are missing or noisy, run a small off-the-shelf VLM (e.g., LLaVA, GPT-4V) on sampled frames to generate standardized task descriptions — same technique used to build SmolVLA's training set.
 
-**3. Fine-tuning with LoRA / QLoRA**
+**3. Fine-tuning with LoRA / [[algo-qlora|QLoRA]]**
 - **LoRA rank**: r=8 or r=16 is typically enough for single-task adaptation. Higher rank = more capacity but more parameters to update and higher overfitting risk.
 - **Target modules**: attention layers (Q, K, V, O projections). Optionally include the action head fully (no LoRA on the action expert).
-- **QLoRA (for large models)**: 4-bit NF4 quantization of the frozen backbone + full-precision LoRA adapters. Enables 7B fine-tuning on a single 48GB GPU.
+- **[[algo-qlora|QLoRA]] (for large models)**: 4-bit NF4 quantization of the frozen backbone + full-precision LoRA adapters. Enables 7B fine-tuning on a single 48GB GPU.
 - **Learning rate**: 1e-4 to 5e-5 for LoRA adapters. Use cosine decay with 100-step warmup.
 - **Epochs**: 10–50 epochs on a small dataset. Monitor held-out success rate, not just training loss — VLAs can memorize demos without generalizing.
 - **Frozen vs full fine-tune**: LoRA (frozen backbone + adapters) is strongly preferred. Full fine-tuning on a small dataset destroys the pretrained language/vision knowledge.
@@ -360,8 +360,8 @@ VLAs start with a backbone trained on billions of images from diverse conditions
 - **Quantized inference**: 4-bit quantization allows 7B models on a single 24GB GPU with <5% performance drop
 - **Language interface at runtime**: send instruction string; VLA handles grounding without retraining
 - **Action chunk execution**: VLAs typically predict 50-step chunks (like ACT). Execute the chunk, then re-query with updated observation.
-- **Failure recovery**: add a lightweight success classifier (binary: did the subtask complete?) between action chunks. On failure, either re-issue the instruction or fall back to a recovery primitive.
-- **Inference latency budget**: SmolVLA at 450M generates a 50-step chunk in ~200ms on a GPU — acceptable for most tasks. For faster loops, reduce chunk size or use async inference.
+- **Failure recovery**: add a lightweight success classifier (binary: did the subtask complete?) between action chunks. On failure, either re-issue the instruction or fall back to a recovery primitive (see [[algo-gemini-robotics-15|GR-ER 1.5]] for a production example of this pattern).
+- **Inference latency budget**: [[vision-language-action-models|SmolVLA]] at 450M generates a 50-step chunk in ~200ms on a GPU — acceptable for most tasks. For faster loops, reduce chunk size or use async inference.
 
 #### ⚠️ Key constraints
 | Constraint | Typical value | Notes |

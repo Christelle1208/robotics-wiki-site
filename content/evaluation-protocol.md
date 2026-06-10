@@ -153,13 +153,15 @@ This section operationalizes the axes above for the specific experimental setup.
 | Perturbation: slip | Object pushed during grasp | 20 | 20 |
 | **Total** | | | **~210 trials** |
 
-### Per-algorithm comparison table (to be filled)
+### Per-algorithm comparison table (Dataset_v4 results)
 
-| Algorithm | ID | Near-OOD (pos) | Near-OOD (orient) | Near-OOD (light) | Distractor | New color | Slip recovery |
-|-----------|----|-----------|-----------|----|----|----|---|
-| SAC | 92% (sim) | 🔄 | 🔄 | 🔄 | 🔄 | 🔄 | 🔄 |
-| ACT | 🔄 | 🔄 | 🔄 | 🔄 | 🔄 | 🔄 | 🔄 |
-| SmolVLA | 🔄 | 🔄 | 🔄 | 🔄 | 🔄 | 🔄 | 🔄 |
+| Algorithm | ID (0°) | ID (45°) | OOD positions (0°) | OOD positions (45°) | Novel random pos. | Distractor |
+|-----------|---------|---------|-------------------|--------------------|--------------------|-----------|
+| SAC (sim) | 92% | N/A | N/A | N/A | N/A | N/A |
+| **ACT** | **83%** (10/12) | **92%** (11/12) | 50% (2/4) | **100%** (4/4) | **80%** (4/5) | **75%** (3/4) |
+| SmolVLA | 58% (7/12) | 58% (7/12) | 25% (1/4) | 50% (2/4) | 60% (3/5) | 0% (0/4)* |
+
+*SmolVLA: 3 near-successes with distractor (cube above box but dropped on edge). Training data: ~111 episodes (Dataset_v4). Lighting and color generalization not yet tested — Phase 2 of dataset pending.
 
 ---
 

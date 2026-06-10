@@ -77,13 +77,18 @@ VLAs add semantic understanding: a fine-tuned SmolVLA or OpenVLA can pick "the o
 
 ### Experimental results — SO-100
 
-| Method | Environment | Result | Notes |
-|--------|-------------|--------|-------|
-| SAC (task-decomposed) | Simulation | **92% success** | 3-subtask reward (approach, grasp, place) |
-| ACT | — | 🔄 Pending | — |
-| SmolVLA | — | 🔄 Pending | — |
+| Method | Environment | ID result | OOD result | Distractor | Notes |
+|--------|-------------|-----------|-----------|-----------|-------|
+| SAC (task-decomposed) | Simulation | **92%** (50 eps) | N/A | N/A | Reach 96% · Grasp 92% · Place 92% · 8 drop recoveries |
+| ACT (Dataset_v4, 100k steps) | Real hardware | **83%** @ 0° / **92%** @ 45° | 100% OOD @ 45° / 50% @ 0° | **75%** (3/4) | 80 novel positions: 80%. Best overall algorithm on this setup. |
+| SmolVLA (Dataset_v4, 20k steps) | Real hardware | **58%** (both orient.) | 50% OOD @ 45° / 25% @ 0° | **0%** (3 near-success) | Many near-successes: precision issue, not comprehension |
 
-*These results will be updated as experiments progress. The SAC simulation result confirms that RL with proper reward shaping is a very strong baseline. Whether IL (ACT) can match it from demonstrations alone — without simulator access — is the central open question for real deployment.*
+**Key finding:** ACT outperforms SmolVLA on all conditions with ~111 episodes of training data. Dataset iteration (v1→v4) was the primary driver of improvement — more impactful than algorithm choice. SmolVLA's distractor failure (0% success despite 75% near-success) is the most counter-intuitive result: fine-tuning on narrow Phase 1 data erodes the pre-trained backbone's generalization.
+
+**PPO vs SAC (same sim environment, 50% success threshold):**
+- PPO: 3.17M steps / ~20 min training
+- SAC: 1.58M steps / ~5h training  
+→ SAC is 2× more sample-efficient but slower wall-clock per step.
 
 ---
 

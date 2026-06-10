@@ -403,100 +403,114 @@ This section compiles empirical observations from experiments on the **SO-100** 
 ### SAC — Soft Actor-Critic
 
 **Task:** Pick-and-place on SO-100 in simulation (MuJoCo)  
-**Result:** ✅ **92% success rate**
+**Result:** ✅ **92% overall success (50 episodes)**
 
 #### Setup
-- Simulator: MuJoCo
-- State space: joint positions + gripper state + object position
+- Simulator: MuJoCo (CPU)
+- State space: joint positions + gripper state + object/goal positions
 - Action space: joint velocity deltas (continuous)
-- Reward: task-decomposed across 3 subtasks (approach object / grasp / reach place position), with shaped intermediate rewards
+- Reward: 3-subtask decomposition (Reach / Grasp scripted / Place) from Kim et al. 2023 — weighted axis distance penalty + energy penalty
+- Object position randomized ±7cm (fixed orientation), fixed box
 
 #### What worked
-- **Task decomposition was the key lever** — splitting the reward into 3 subtasks dramatically accelerated convergence compared to a sparse end-to-end reward. Each subtask provides dense learning signal even when the full task fails.
-- **SAC's automatic entropy tuning** worked well out of the box — no manual entropy coefficient tuning needed. The policy self-balanced exploration/exploitation across training.
-- **92% is a strong sim baseline** — competitive with published results (Kim et al., 2023: 93.2% with similar decomposition).
+- **Task decomposition was the decisive lever.** Splitting into 3 subtasks (Reach → scripted Grasp → Place) with per-subtask shaped rewards accelerated convergence dramatically vs. a single sparse signal.
+- **Scripting the Grasp** (100-step deterministic gripper close) eliminated one failure mode. The lesson: don't learn what can be made deterministic.
+- **Recovery system:** if the cube falls (z ≤ 5cm) during Place, the state machine relaunches Reach. 8 drop recoveries in 50 episodes saved 8 episodes that would have failed.
+- **Quantitative results (50 episodes):** Reach 96% (48/50) · Grasp 92% (46/50) · Place 92% (46/50) · Overall 92% (46/50)
+- **PPO vs SAC comparison (same env, 50% success threshold):** SAC reaches 50% in 1.58M steps (5h); PPO in 3.17M steps (20 min). SAC is 2× more sample-efficient but slower wall-clock.
 
-#### What didn't work / open questions
-- *[To be filled once real-hardware experiments are complete]*
-- Expected sim-to-real drop: literature suggests 10–20 pp, meaning ~72–82% on real hardware. How much of the sim precision transfers?
-
-#### Surprises
-- *[To be filled]*
+#### What didn't work
+- **Generalization is hard.** The policy was trained with fixed orientation and ±7cm position randomization. New orientations or larger position ranges require retraining.
+- **Reward design took significant iteration.** The energy penalty and per-axis weighting required empirical tuning before convergence was clean.
 
 #### Critical assessment
-SAC is a reliable, well-understood baseline that works quickly in simulation with the right reward. The engineering cost is **reward design** — not trivial, but tractable. The open question is sim-to-real transfer: does 92% in MuJoCo become a useful real-world policy?
+SAC is the strongest baseline on this task in simulation. The 3-subtask decomposition pattern is directly reusable. The engineering cost is upfront (reward design: ~1–2 days of iteration) but the payoff is high (92% reliable sim policy). Real-hardware transfer remains untested — literature suggests 10–20 pp drop.
 
-> **Revised recommendation:** SAC + task decomposition is the right starting point for any manipulation task with a simulator. The 3-subtask decomposition pattern (approach → grasp → place) is reusable across P&P variants. Budget 1–2 days for reward iteration.
+> **Revised recommendation:** SAC + 3-subtask decomposition + scripted intermediate steps is the go-to for any simulation P&P task. Add a recovery state machine from day one — it costs little and saves many episodes.
 
 ---
 
 ### ACT — Action Chunking with Transformers
 
-**Task:** Pick-and-place on SO-100  
-**Result:** 🔄 **In progress**
+**Task:** Pick-and-place on SO-100 (real hardware)  
+**Result:** ✅ **83% in-distribution / 94% at 45° orientation (Dataset_v4)**
 
 #### Setup
-- *[To be filled — number of demos, collection method, hardware setup]*
+- Dataset: Dataset_v4 (80 Phase 1 episodes + 15 recovery + 16 random orientation = ~111 episodes)
+- Training: 100k steps, single GPU
+- Cameras: wrist + side
+- Teleoperation: ALOHA-style leader/follower with PID gain adjusted (P=4) for smooth trajectories
+
+#### Dataset iteration journey
+- **v1 (50 eps, mono camera):** Failed — environment not reproducible between training and eval. Policy replays training trajectory but can't adapt to new cube position. Key lesson: _need a reproducible environment_.
+- **v2 (80 eps, Phase 1):** Approaches cube at ~10cm. Understands intention (always goes toward cube) but can't get close enough. Hypothesis: low contrast — blue gripper confuses with black box.
+- **v3 (80 eps + colored markers):** Post-its on robot and box improve contrast. Approaches 5–7cm, slightly to the side. OOD: goes to closest known position, can't reach new ones.
+- **v4 (v3 + 15 recovery + 16 orientation eps):** Final dataset. Solved orientation and recovery gaps.
 
 #### What worked
-- *[To be filled]*
+- **Recovery episodes were the game changer.** Adding 15 episodes starting from failure situations (cube pushed, arm up, cube dropped) fixed the complete inability to recover seen in v2/v3.
+- **Orientation diversity worked.** 16 random orientation episodes made the 45° performance jump to 92–100%.
+- **In-distribution performance is strong (83%).** ACT reliably reproduces trained positions.
+- **Surprising OOD generalization at 45°:** 4/4 (100%) on unseen positions at 45° — better than at 0°. The varied orientation episodes created richer generalizable features.
+- **Distractor robustness (75%):** Handled well — ACT is not confused by a second object.
 
 #### What didn't work
-- *[To be filled]*
-
-#### Surprises
-- *[To be filled]*
+- **OOD at 0° is moderate (50%).** When the cube is at a completely unseen position in the standard orientation, ACT goes to the nearest known position and tries to close the gripper there.
+- **Jerky movements** persist at some steps — the PID tuning helped but didn't fully resolve smoothness.
 
 #### Critical assessment
-*[To be filled once experiments complete.]*
+ACT outperformed SmolVLA on all tested conditions with this dataset volume (~111 episodes). The key insight is that **data composition matters more than algorithm choice** — each dataset iteration (v1→v4) drove more improvement than any hyperparameter change.
 
-Key questions this experiment will answer:
-- How many demonstrations does ACT actually need on SO-100 to reach ~80% success?
-- How sensitive is performance to demonstration quality and consistency?
-- Does ACT's real-hardware performance justify the demo collection overhead compared to SAC in sim?
-
-> **Hypothesis:** ACT should reach 70–85% on real hardware from 20–40 demos, without any reward design or simulator. If it exceeds SAC's real-hardware performance (expected ~72–82% after sim-to-real drop), IL becomes the preferred approach for this setup.
+> **Revised recommendation:** ACT with 80–100 well-structured episodes (varied positions, orientations, AND recovery situations) achieves 83–94% on real hardware without any reward design. The mandatory ingredients are: PID-calibrated teleop hardware, reproducible eval environment, and deliberate coverage of failure modes in the dataset.
 
 ---
 
 ### SmolVLA — Small Vision-Language-Action Model
 
-**Task:** Pick-and-place on SO-100  
-**Result:** 🔄 **In progress**
+**Task:** Pick-and-place on SO-100 (real hardware)  
+**Result:** ✅ **58% in-distribution / 0% with distractor (Dataset_v4)**
 
 #### Setup
-- Base model: SmolVLA (~450M parameters, HuggingFace)
-- Fine-tuning: *[number of demos, LoRA config, hardware — to be filled]*
-- Language instruction: *[e.g., "pick the red cube and place it in the bin"]*
+- Base model: SmolVLA (~450M parameters, HuggingFace, pre-trained on SO-100/SO-101 community datasets)
+- Fine-tuning: Dataset_v4, 20k steps, 4 GPUs (AWS g5.12xlarge)
+- Same dataset as ACT (Dataset_v4)
+- Language instruction: "pick the red cube and place it in the bin"
+
+#### Dataset iteration journey (same as ACT)
+- **v2:** Better spatial approach than ACT at same stage (~4-5cm above cube). Understands grasping intention (tries to close gripper when cube centered in wrist camera). But doesn't descend enough. Same contrast hypothesis as ACT.
+- **v3 (25k steps, 4 GPUs):** 4 successes out of 16 tested (25%). Recovery completely absent. 45° orientation blocks the policy (keeps wrist straight instead of rotating).
+- **v4 (20k steps, 4 GPUs):** Final dataset. Performance improved but key gaps remain.
 
 #### What worked
-- *[To be filled]*
+- **Consistent performance across orientations.** SmolVLA achieves 58% in-distribution at both 0° and 45°, suggesting the pre-trained backbone provides some orientation invariance.
+- **Understands the task globally.** Many near-successes (cube above box, dropped at the edge): the policy knows what to do and where to go. The failure is precision, not comprehension.
+- **OOD orientation is moderate (50%)** — better than might be expected for a fine-tuned model with limited orientation training data.
 
 #### What didn't work
-- *[To be filled]*
+- **0% with distractor (4 episodes).** Despite 3 near-successes, SmolVLA fails entirely when a second object is in the scene. Counter-intuitive given VLA's reputation for generalization — but this variation was absent from the fine-tuning data (Phase 1 only).
+- **Recovery remains weak.** When the first grasp fails, SmolVLA tries to reposition above the cube but consistently misses. More recovery episodes in the dataset would likely fix this.
+- **Lower absolute performance than ACT.** 58% vs 83% in-distribution. On this task and this data volume, ACT's specialization beats SmolVLA's generalism.
 
 #### Surprises
-- *[To be filled]*
+- **The distractor result is the most striking finding.** The expectation was that SmolVLA would generalize better thanks to pre-training. Instead, ACT (trained from scratch on the same data) was far more robust to distractors. This suggests fine-tuning on Phase 1 only slightly "overwrites" the pre-training robustness.
+- **Near-success rate is a better signal than success rate** for SmolVLA. Many 0%-success conditions actually have 75% near-success, indicating the policy is behaviorally correct but imprecise.
 
 #### Critical assessment
-*[To be filled once experiments complete.]*
+SmolVLA's results are lower than expected on this specific task and data volume. The hypothesis: for a **fixed-setup single task with ~80 episodes**, ACT's direct specialization wins. SmolVLA's advantages (language conditioning, generalization) would likely show at larger data scale or on multi-task settings. The counter-intuitive distractor failure points to a fundamental tradeoff: fine-tuning on narrow data can erode the generalist robustness the pre-trained backbone provides.
 
-Key questions this experiment will answer:
-- Does VLA fine-tuning generalize better than ACT to new object positions (the core VLA value proposition)?
-- Is inference speed acceptable on available hardware without async infrastructure?
-- Is the fine-tuning overhead (data collection + GPU training) justified over ACT for a fixed-setup task?
-
-> **Hypothesis:** SmolVLA will show better generalization to new object positions than ACT (language conditioning + visual backbone generalization), but lower peak performance on the exact trained configuration. The crossover point — where generalization matters more than peak accuracy — determines which to prefer in practice.
+> **Revised recommendation:** For a fixed single-task setup with <150 demos, prefer ACT. SmolVLA's generalist advantages need larger or more diverse fine-tuning data to manifest. If adding Phase 2 robustness demos (lighting, distractor), SmolVLA would likely recover its expected generalization advantage. The crossover point is somewhere around 150–200 diverse demos.
 
 ---
 
-### Cross-algorithm comparison (will be updated)
+### Cross-algorithm comparison — SO-100 results
 
-| Algorithm | Sim result | Real result | Data cost | Engineering cost | Generalization |
-|-----------|-----------|-------------|-----------|-----------------|----------------|
-| SAC | **92%** | 🔄 Pending | None (reward) | Medium (reward design) | ❌ Task-specific |
-| ACT | — | 🔄 Pending | ~20–40 demos | Low | ⚠️ Fixed setup |
-| SmolVLA | — | 🔄 Pending | ~50–100 demos | Medium (fine-tune) | ✅ Language-conditioned |
+| Algorithm | Sim result | Real ID | Real OOD | Distractor | Data | Key finding |
+|-----------|-----------|---------|----------|-----------|------|------------|
+| **SAC** | **92%** (50 eps) | N/A (sim only) | N/A | N/A | 0 demos (reward) | 3-subtask decomp + recovery = 92% |
+| **ACT** | — | **83%** (0°) / **92%** (45°) | **100%** OOD at 45° | **75%** (3/4) | ~111 demos | Data iteration > algorithm choice |
+| **SmolVLA** | — | **58%** (both orient.) | 50% OOD at 45° | **0%** (3 near-success) | ~111 demos | Fine-tuning on narrow data erodes pre-training robustness |
+
+**Key meta-finding:** The dataset iteration v1→v2→v3→v4 drove more performance improvement than any algorithmic change. ACT outperforms SmolVLA at this data volume; the advantage likely reverses with larger/more diverse fine-tuning data.
 
 ---
 

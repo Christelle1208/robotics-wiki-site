@@ -94,11 +94,11 @@ This wiki was built in parallel with experiments on the **SO-100** robot arm for
 
 | Method | Environment | Status | Result |
 |--------|-------------|--------|--------|
-| SAC | Simulation (MuJoCo) | ✅ Done | **92% success rate** |
-| ACT | Real / Sim | 🔄 In progress | — |
-| SmolVLA | Real / Sim | 🔄 In progress | — |
+| SAC (3-subtask, recovery) | Simulation (MuJoCo) | ✅ Done | **92% overall** (Reach 96% · Grasp 92% · Place 92%) |
+| ACT (Dataset_v4, 100k steps) | Real hardware (SO-100) | ✅ Done | **83% ID / 94% @ 45° / 75% distractor** |
+| SmolVLA (Dataset_v4, 20k steps) | Real hardware (SO-100) | ✅ Done | **58% ID / 0% distractor** (many near-successes) |
 
-*Results will be linked back into [[pick-and-place]], [[reinforcement-learning]], and [[imitation-learning]] once available.*
+**Meta-finding:** Dataset iteration (v1→v4) was the biggest performance driver. ACT outperforms SmolVLA at ~111 episodes — advantage likely reverses with more diverse fine-tuning data. See [[decision-guide]] REX section and [[evaluation-protocol]] for full breakdown.
 
 ---
 

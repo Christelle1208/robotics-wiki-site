@@ -175,6 +175,17 @@ Combines diffusion-based policy generation with the Mamba2 state-space model arc
 
 ---
 
+### CLIPORT: What and Where Pathways for Robotic Manipulation → [[algo-cliport]]
+**Shridhar, Manuelli, Fox — CoRL 2021**
+
+A **language-conditioned imitation-learning agent** combining a frozen, pretrained **CLIP** model (semantic "what" pathway) with the **Transporter** network's two-step pick-and-place primitive (spatial "where" pathway). Trained purely from demonstrations via cross-entropy on pick/place affordance heatmaps — no object detectors, segmentation, or pose estimation.
+
+Achieves **>90%** average success on 10 simulated language-conditioned tasks with both streams, vs. 50% (Transporter-only, no language) or 76% (CLIP-only, no spatial precision) for either alone. A single multi-task model for all 10 tasks often **outperforms** per-task models (57% of evaluations). Validated on a real Franka Panda with just 179 image-action pairs across 9 tasks (~55-75% success).
+
+*Architecture:* Two-stream FCN — frozen CLIP ResNet50 + CLIP sentence encoder (semantic) / Transporter ResNet (spatial), fused via tiled Hadamard conditioning | *Tags:* CLIP, language-conditioned, affordance prediction, pick-and-place, multi-task, 2021 | See: [[vision-language-action-models]], [[pick-and-place]]
+
+---
+
 ## Comparison: Key IL Methods
 
 | Method | Action Space | Multimodal | Long Horizon | Speed |
@@ -184,6 +195,7 @@ Combines diffusion-based policy generation with the Mamba2 state-space model arc
 | Diffusion Policy | Continuous | Yes | Good | Slow |
 | VQ-BeT | Discrete tokens | Yes | Good | 5x faster than Diffusion |
 | Mamba2Diff | Continuous | Yes | Very good | — |
+| CLIPORT | Pixelwise affordance (pick/place SE(2)) | No (argmax) | Step-by-step via language | Fast (FCN inference) |
 
 ---
 

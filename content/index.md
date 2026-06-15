@@ -24,6 +24,7 @@ An ensemble view of every major page: what it covers, and whether it's a finishe
 | [[vision-language-action-models]] | VLA models + critical synthesis | ✅ Complete |
 | [[algo-smolvla]] | SmolVLA architecture, fine-tuning strategies, project results | ✅ Complete |
 | [[algo-act]] | ACT architecture, project results | ✅ Complete |
+| [[algo-cliport]] | CLIPORT architecture (CLIP + Transporter), literature only | 🔄 Reference only — no own experimental results |
 | [[algo-sac]] | SAC deep-dive | ✅ Complete |
 | [[grasping-and-manipulation]] | Grasping methods, contact-rich manipulation | 🔄 Reference only — no own experimental results |
 | [[hybrid-il-rl]] | AWAC, Relay Policy, HITL-RL | 🔄 Reference only — not yet tested in this project |
@@ -77,6 +78,7 @@ Detailed pages covering mechanics, intuition, evaluation, results, and pros/cons
 | [[algo-act]] | ACT | Action Chunking with Transformers + CVAE; 80-90% bimanual success from 10-min demos |
 | [[algo-diffusion-policy]] | Diffusion Policy | DDPM-based visuomotor policy; +46.9% avg over SOTA; handles multimodal distributions |
 | [[algo-vq-bet]] | VQ-BeT | Hierarchical vector-quantized action tokens; 5× faster than Diffusion Policy |
+| [[algo-cliport]] | CLIPORT | Frozen CLIP (semantic) + Transporter (spatial) two-stream IL; >90% on language-conditioned pick-and-place; precursor to VLAs |
 
 ### VLA Models and Generalist Policies
 
@@ -113,7 +115,7 @@ Detailed pages covering mechanics, intuition, evaluation, results, and pros/cons
 | Page | Summary |
 |------|---------|
 | [[reinforcement-learning]] | Core RL algorithms (PPO, SAC, DQN, SQL, MAPPO, CQL, HER) and their application to robot manipulation |
-| [[imitation-learning]] | Learning from demonstrations: behavioral cloning, ACT, Diffusion Policy, VQ-BeT, Mamba2Diff |
+| [[imitation-learning]] | Learning from demonstrations: behavioral cloning, ACT, Diffusion Policy, VQ-BeT, Mamba2Diff, CLIPORT |
 | [[hybrid-il-rl]] | Methods combining IL bootstrapping with RL fine-tuning: AW-Opt, Relay Policy Learning, HITL-RL |
 | [[vision-language-action-models]] | VLA models: OpenVLA, SmolVLA, TinyVLA, SafeVLA, VLA-RL, X-VLA, GF-VLA, Octo, Molmo family |
 | [[world-models]] | World and action models: GigaWorld-Policy, World Action Models (zero-shot), visual predictive models |
@@ -168,6 +170,7 @@ Detailed pages covering mechanics, intuition, evaluation, results, and pros/cons
 | EasyMimic: A Low-Cost Framework for Robot IL from Human Videos | 2026 | 3D hand tracking from video → robot co-training via LeRobot; no motion capture needed |
 | Data-driven Planning via Imitation Learning | 2017 | IL for robot planning; learns search strategy adaptation from expert demonstrations |
 | Mamba2Diff: Enhanced Diffusion for Goal-Conditioned IL in Long-Horizon Tasks | 2026 | Diffusion + Mamba2 SSM + BDGM module for GCIL long-horizon action modeling |
+| CLIPORT: What and Where Pathways for Robotic Manipulation | 2021 | Frozen CLIP (semantic) + Transporter (spatial) two-stream IL; >90% on language-conditioned pick-and-place; 179-demo real-robot transfer |
 
 ---
 

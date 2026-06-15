@@ -56,6 +56,15 @@ The main tradeoff: large models (7B+ parameters) are slow at inference and expen
 
 ---
 
+## Precursor: CLIPORT → [[algo-cliport]]
+**Shridhar, Manuelli, Fox — CoRL 2021**
+
+Before "VLA" was a term, **CLIPORT** demonstrated the core idea that defines the paradigm above: graft a **frozen, internet-pretrained vision-language model (CLIP)** onto a robot-specific action network to get language-conditioned manipulation, without retraining the semantic backbone from scratch. Its two-stream architecture (CLIP "what" pathway + Transporter "where" pathway) achieved >90% on language-conditioned pick-and-place tasks in simulation and was validated on a real Franka Panda with only 179 demonstrations across 9 tasks.
+
+Architecturally it differs sharply from modern VLAs — it predicts dense pixelwise pick/place *affordances* (SE(2)) rather than continuous joint trajectories via autoregressive tokens or flow matching — but the **frozen-pretrained-backbone-for-semantics** idea reappears directly in [[algo-smolvla|SmolVLA]]'s fine-tuning strategy options. See [[algo-cliport]] for full detail.
+
+---
+
 ## Generalist Policies
 
 ### Octo: An Open-Source Generalist Robot Policy → [[algo-octo]]

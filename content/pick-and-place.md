@@ -46,6 +46,8 @@ IL removes the reward design bottleneck. With 10–50 demonstrations via teleope
 
 **Key insight from the literature:** ACT's action chunking (predicting k future actions jointly) is specifically designed to fight the compounding error problem in P&P. Diffusion Policy handles multimodal grasps better (e.g., left-hand vs right-hand approach). For long-horizon P&P sequences, Mamba2Diff's temporal SSM outperforms both.
 
+**Affordance-based P&P with language → [[algo-cliport]]:** CLIPORT reformulates P&P as a 2-step `(T_pick, T_place)` affordance-prediction problem, conditioned on a frozen CLIP model for language/semantics. This sidesteps reward design *and* per-object retraining — "pack the blue pen" vs "pack the red pen" is handled by the same model via language conditioning, achieving >90% on seen language-conditioned tasks with as few as 100 demos. The tradeoff: the SE(2) pick/place primitive doesn't extend to dexterous 6-DOF manipulation the way ACT/Diffusion Policy's continuous action spaces do.
+
 #### VLA for P&P
 VLAs add semantic understanding: a fine-tuned SmolVLA or OpenVLA can pick "the object on the left" or "the red container" without any task-specific reward or dedicated demonstration per object. This is the direction the field is moving for real-world deployment.
 

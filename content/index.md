@@ -4,6 +4,35 @@ A wiki compiled from research papers on robot manipulation, reinforcement learni
 
 **New here?** Start with [[overview]] — it explains the three paradigm families and how to navigate the wiki.  
 **Choosing an approach?** Go directly to [[decision-guide]] for the decision flowchart and comparison tables.
+**Want the experimental results directly?** Go to [[results]] for the SO-100 results dashboard.
+
+---
+
+## 📊 Wiki Status — At a Glance
+
+An ensemble view of every major page: what it covers, and whether it's a finished synthesis (with this project's own results) or still reference-only / pending data.
+
+| Page | What it covers | Status |
+|------|-----------------|--------|
+| [[overview]] | Three-paradigm framework, navigation guide, experiment tracker | ✅ Complete |
+| [[decision-guide]] | Decision flowchart, per-family training/robustness guides, REX (full narrative results) | ✅ Complete |
+| [[evaluation-protocol]] | Evaluation axes (ID/OOD/robustness), SO-100 test matrix, per-algorithm comparison | ✅ Complete — full 210-trial matrix still pending |
+| [[results]] | Consolidated SO-100 results dashboard (SAC, ACT, SmolVLA) | ✅ Complete |
+| [[pick-and-place]] | P&P synthesis across the 3 families + SO-100 results | ✅ Complete |
+| [[reinforcement-learning]] | RL algorithms + critical synthesis ("when to use RL") | ✅ Complete |
+| [[imitation-learning]] | IL algorithms + critical synthesis, contact-rich survey | ✅ Complete |
+| [[vision-language-action-models]] | VLA models + critical synthesis | ✅ Complete |
+| [[algo-smolvla]] | SmolVLA architecture, fine-tuning strategies, project results | ✅ Complete |
+| [[algo-act]] | ACT architecture, project results | ✅ Complete |
+| [[algo-sac]] | SAC deep-dive | ✅ Complete |
+| [[grasping-and-manipulation]] | Grasping methods, contact-rich manipulation | 🔄 Reference only — no own experimental results |
+| [[hybrid-il-rl]] | AWAC, Relay Policy, HITL-RL | 🔄 Reference only — not yet tested in this project |
+| [[trajectory-planning]] | Motion planning algorithms | 🔄 Reference only |
+| [[simulation-and-tools]] | Simulators, LeRobot tooling | 🔄 Reference only |
+| [[world-models]] | World/action models | 🔄 Reference only — emerging area, no own experiments |
+| [[llms-for-robotics]] | LLM/VLM foundation models for robotics | 🔄 Reference only |
+
+**Legend:** ✅ Complete = has both literature synthesis and (where applicable) this project's own results. 🔄 Reference only = literature coverage exists but no SO-100 experiments have been run yet for this topic.
 
 ---
 
@@ -14,6 +43,7 @@ A wiki compiled from research papers on robot manipulation, reinforcement learni
 | [[overview]] | Entry point — three paradigm families, how to navigate, experimental results |
 | [[decision-guide]] | Flowchart + comparison table — which approach for which situation; training workflows, robustness techniques, REX |
 | [[evaluation-protocol]] | Standardized evaluation axes (ID, near-OOD, far-OOD, robustness, perturbation) + SO-100 test matrix |
+| [[results]] | Results dashboard — consolidated SO-100 results for SAC, ACT, and SmolVLA |
 
 ---
 
@@ -52,6 +82,7 @@ Detailed pages covering mechanics, intuition, evaluation, results, and pros/cons
 
 | Page | Algorithm | Summary |
 |------|-----------|---------|
+| [[algo-smolvla]] | SmolVLA | ~450M VLA; SmolVLM-2 + flow-matching action expert; fine-tuning strategies (frozen backbone vs full fine-tune) and SO-100 project results |
 | [[algo-openvla]] | OpenVLA | 7B open-source VLA; Llama2+DINOv2+SigLIP; beats RT-2-X (55B) by 16.5% |
 | [[algo-octo]] | Octo | ~90M generalist policy; 800k demos; modular fine-tuning to new robots in hours |
 | [[algo-vla-rl]] | VLA-RL | Online RL fine-tuning of OpenVLA; +4.5% on LIBERO; process reward model; inference scaling |

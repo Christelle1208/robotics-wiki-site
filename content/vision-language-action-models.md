@@ -37,11 +37,11 @@ VLAs are advancing faster than any other paradigm in this wiki. The trajectory: 
 
 ### 📊 VLAs in the SO-100 experiments
 
-| Model | Status | Key question |
+| Model | Status | Result |
 |-------|--------|-------------|
-| SmolVLA | 🔄 Pending | Does VLA fine-tuning generalize better to new positions than ACT? |
+| [[algo-smolvla\|SmolVLA]] | ✅ Done (Dataset_v4) | **58%** in-distribution, **0%** with distractor (3 near-successes) — see [[results]] |
 
-*The hypothesis: SmolVLA requires less per-task engineering than SAC (no reward design) and generalizes better than ACT (to new object positions) — but requires more compute and may be slower at inference.*
+**Outcome vs hypothesis:** the original hypothesis was that SmolVLA would generalize better than ACT to new positions/objects thanks to pretraining. In practice, at ~111 fine-tuning demos, **ACT outperformed SmolVLA on every tested condition**, including the distractor case where SmolVLA dropped to 0%. The leading explanation is fine-tuning-strategy-dependent: SmolVLA was fully fine-tuned (no frozen layers), which may have eroded the pretrained backbone's robustness to novel scene elements. See [[algo-smolvla]] for the fine-tuning options analysis and a proposed follow-up with a frozen-backbone strategy.
 
 ---
 
@@ -119,7 +119,7 @@ The leading open generalist VLA as of 2025. Introduces **flow matching** (instea
 
 ## Efficient VLAs
 
-### SmolVLA: A VLA for Affordable and Efficient Robotics
+### SmolVLA: A VLA for Affordable and Efficient Robotics → [[algo-smolvla]]
 **Shukor et al. — HuggingFace, 2025**
 
 Addresses the cost barrier of large VLAs like π0 (3.3B params). SmolVLA targets accessible hardware: trains on a **single GPU**, deploys on **consumer GPUs or CPUs**.

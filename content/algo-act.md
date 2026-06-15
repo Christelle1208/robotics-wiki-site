@@ -180,7 +180,24 @@ The low cost is crucial: it makes 10-minute demo collection accessible to indivi
 
 ---
 
+## Results in This Project — ACT & SmolVLA on SO-100 (Dataset_v4)
+
+ACT and [[algo-smolvla|SmolVLA]] were fine-tuned on the same dataset (Dataset_v4, ~111 episodes: 80 Phase 1 + 15 recovery + 16 random-orientation episodes) and evaluated under the same protocol. Full per-condition tables and analysis live in [[results]] and the [[decision-guide]] REX section.
+
+| Algorithm | In-distribution | OOD position | Distractor | Training | Key finding |
+|-----------|-----------------|--------------|-----------|----------|------------|
+| **ACT** | **83%** @ 0° / **92%** @ 45° | **100%** OOD @ 45° / 50% @ 0° | **75%** (3/4) | 100k steps, 1 GPU | Dataset iteration (v1→v4) drove most of the gain; recovery + orientation episodes were decisive |
+| [[algo-smolvla\|SmolVLA]] | **58%** (both orientations) | 50% @ 45° / 25% @ 0° | **0%** (3 near-successes) | 20k steps, 4 GPUs, full fine-tune | Consistent across orientations, but fails entirely with a distractor |
+
+**Takeaways for ACT specifically:**
+- **Best overall algorithm on this setup** — outperforms SmolVLA on every tested condition at this data volume (~111 demos).
+- **Recovery episodes were the single biggest improvement.** Adding 15 episodes that start from failure states (cube pushed, arm raised, cube dropped) fixed ACT's complete inability to recover, which was the dominant failure mode in Dataset_v2/v3.
+- **45° orientation generalizes better than 0°** (100% OOD vs 50% OOD) — the 16 random-orientation training episodes produced richer, more generalizable visual features than expected.
+- **Data composition > algorithm choice.** Each dataset iteration (v1→v4) produced a larger jump than any hyperparameter change — see [[decision-guide]] for the full v1→v4 narrative.
+
+---
+
 ## In This Wiki
 
-ACT: [[imitation-learning]], [[grasping-and-manipulation]], [[pick-and-place]] (bimanual tasks).
-Compare with: [[algo-diffusion-policy]] (different approach to multimodal IL; explicit denoising rather than CVAE), [[algo-vq-bet]] (tokenization-based alternative), [[algo-relay-policy]] (hierarchical IL+RL for long-horizon tasks).
+ACT: [[imitation-learning]], [[grasping-and-manipulation]], [[pick-and-place]] (bimanual tasks), [[results]] (SO-100 results dashboard).
+Compare with: [[algo-diffusion-policy]] (different approach to multimodal IL; explicit denoising rather than CVAE), [[algo-vq-bet]] (tokenization-based alternative), [[algo-relay-policy]] (hierarchical IL+RL for long-horizon tasks), [[algo-smolvla]] (VLA alternative evaluated on the same dataset).

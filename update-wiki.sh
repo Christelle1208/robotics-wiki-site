@@ -8,7 +8,7 @@ git add .
 git commit -m "Update wiki $(date '+%Y-%m-%d')"
 
 echo "🚀 Pushing to GitHub..."
-git push origin v4
+git push origin v5
 
 echo "✅ Done — site will rebuild in ~2 minutes"
 echo "🔗 https://christelle1208.github.io/robotics-wiki-site/"

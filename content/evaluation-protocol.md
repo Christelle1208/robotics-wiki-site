@@ -1,4 +1,4 @@
-# Evaluation Protocol — Robot Learning Policies
+# ⚡ UPDATED VERSION - Evaluation Protocol — Robot Learning Policies
 
 Evaluating a robot learning policy is not just about measuring success rate on the training distribution. A policy that achieves 95% in-distribution success may completely fail when an object is 5cm further away, or when a lamp is turned on. This page defines a standardized evaluation protocol that measures performance across multiple axes to give an honest picture of what a policy *actually* does.
 

@@ -15,11 +15,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - run: ls -la content/ | grep evaluation
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - run: npm ci
       - run: npx quartz build
+      - run: ls -la public/ | head -20
       - uses: actions/upload-pages-artifact@v3
         with:
           path: public
